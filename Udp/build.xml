@@ -1,0 +1,67 @@
+<project name="Rip" default="dist" basedir=".">
+    <description>
+        simple example build file
+    </description>
+  <!-- set global properties for this build -->
+  <property file="build.properties"/>
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}" includeantruntime="true"/>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar jarfile="${dist}/lib/MyProject-${DSTAMP}.jar" basedir="${build}"/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+<!-- Lists the run tasks -->
+    <target name="run">
+        <echo message="Available applications are:"/>
+        <echo message="ant run-udpPub - Run udpPublisher."/>
+		<echo message="ant run-udpSub - Run udpSubscriber."/>
+        <!--echo message="run-NewApp     - Run New Application."/-->
+    </target>
+
+<target name="run-udpPub" depends="compile"
+        description="runs Uudp Publisher" >
+          <java classname="myUDPPublisher" fork="true">
+            <classpath path="${build}"/>
+			<sysproperty key="udp.pub.host" value="${udp.pub.host}"/>
+			<sysproperty key="udp.pub.port" value="${udp.pub.port}"/>
+			<sysproperty key="udp.pub.msg" value="${udp.pub.msg}"/>
+          </java>
+  </target>
+  
+  <target name="run-udpSub" depends="compile"
+        description="runs Udp Subscriber" >
+          <java classname="myUDPSubscriber" fork="true">
+            <classpath path="${build}"/>
+		    <sysproperty key="udp.sub.host" value="${udp.sub.host}"/>
+			<sysproperty key="udp.sub.port" value="${udp.sub.port}"/>
+          </java>
+  </target>
+
+</project>
