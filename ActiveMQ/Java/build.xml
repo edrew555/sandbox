@@ -1,4 +1,4 @@
-<project name="Rip" default="dist" basedir=".">
+<project name="ActiveMQ Clients" default="dist" basedir=".">
     <description>
         simple example build file
     </description>

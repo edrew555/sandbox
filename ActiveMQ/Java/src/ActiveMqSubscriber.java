@@ -13,29 +13,68 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-public class ActiveMqSubscriber {
+public class ActiveMqSubscriber implements Runnable, ExceptionListener{
 	
-	public static void listen( String host, String port, String topic)  {
+	MessageConsumer consumer = null;
+	Connection connection = null;
+	Session session = null;
 	
+	String host = "localhost";
+	String port = "61616";
+	String topic = "MyTestTopic";
+	
+	ActiveMqSubscriber()
+	{}
+	
+	ActiveMqSubscriber(String _topic)
+	{
+		topic = _topic;
+	}
+	
+    ActiveMqSubscriber(String _host, String _port, String _topic)
+	{
+		host = _host;
+		port = _port;
+		topic = _topic;
+	}
+	
+	public void setup()
+	{
+		
+		try{
+		// Create a ConnectionFactory
+		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://"+host+":"+port);
+
+		// Create a Connection
+		connection = connectionFactory.createConnection();
+		connection.start();
+
+		connection.setExceptionListener(this);
+
+		// Create a Session
+		session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+		// Create the destination (Topic or Queue)
+		Destination destination = session.createTopic(topic);
+
+		// Create a MessageConsumer from the Session to the Topic or Queue
+		consumer = session.createConsumer(destination);
+		}
+		catch (Exception e) 
+			{
+				System.out.println("Caught: " + e);
+				//e.printStackTrace();	
+			}	
+	}
+	
+	public void run( )  {		
+	
+		if(consumer==null || connection==null || session==null)
+			setup();
+	
+		while(1==1)
+		{
 		try {			
-			
-			// Create a ConnectionFactory
-			ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://"+host+":"+port);
-
-			// Create a Connection
-			Connection connection = connectionFactory.createConnection();
-			connection.start();
-
-			//connection.setExceptionListener(this);
-
-			// Create a Session
-			Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-			// Create the destination (Topic or Queue)
-			Destination destination = session.createTopic(topic);
-
-			// Create a MessageConsumer from the Session to the Topic or Queue
-			MessageConsumer consumer = session.createConsumer(destination);
 
 			// Wait for a message
 			Message message = consumer.receive();
@@ -48,15 +87,39 @@ public class ActiveMqSubscriber {
 				System.out.println("Received: " + message);
 			}
 
-			consumer.close();
-			session.close();
-			connection.close();
+
 			} 
 			catch (Exception e) 
 			{
 				System.out.println("Caught: " + e);
-				e.printStackTrace();
+				//e.printStackTrace();
+				System.exit(-1);
 			}		
+		}
+	}
+	
+	public synchronized void onException(JMSException ex) {
+            System.out.println("JMS Exception occurred.  Shutting down client.");
+			System.exit(-1);
+        }
+	
+	public void shutdown()
+	{
+	
+		try{
+		if (consumer!=null)
+			consumer.close();
+		if (session!=null)
+			session.close();
+		if(connection!=null)
+			connection.close();		
+		}
+		catch (Exception e) 
+			{
+				System.out.println("Did not shut down gracefully.");
+				//System.out.println("Caught: " + e);
+				//e.printStackTrace();
+			}	
 	}
 }
 	
